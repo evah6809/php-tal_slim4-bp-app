@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="mb-6 bg-gray-50 p-4 rounded-xl border border-gray-200">
+    <p class="text-base font-bold text-gray-600 mb-3 flex items-center gap-1">
+       <i class="far fa-calendar-check text-indigo-500"></i> 見たい月を選んでください。
+    </p>
+    <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+        {% for m in ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'] %}
+            <a href="/history?month={{ m }}" 
+               class="text-center font-extrabold py-3.5 px-2 rounded-xl border-2 text-xl transition shadow-sm block
+                      {% if selected_month == m | int %}
+                        bg-amber-400 border-amber-500 text-gray-950 ring-4 ring-amber-100
+                      {% else %}
+                        bg-white border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-indigo-600 active:scale-95
+                      {% endif %}">
+                {{ m | int }} 月
+            </a>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-4 border-b border-gray-100">
+        <div>
+            <h2 class="text-3xl font-extrabold text-gray-800 flex items-center gap-2">
+                <i class="fas fa-history text-indigo-500"></i> {{ selected_month }}月の測定履歴一覧
+            </h2>
+            <p class="text-sm text-gray-500 mt-2">💡 青い【日付】の文字を押すと、その日のデータを直せます。</p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+            <button onclick="printHandbook('{{ '%02d' | format(selected_month) }}')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl shadow-md transition flex items-center justify-center gap-2 text-base">
+                <i class="fas fa-file-pdf text-xl"></i> PDFを表示する
+            </button>
+
+            <button onclick="downloadCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-xl shadow-md transition flex items-center justify-center gap-2 text-base">
+                <i class="fas fa-file-csv text-xl"></i> CSVデータを保存する
+            </button>
+        </div>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse border border-gray-300 text-sm">
+            <thead>
+                <tr class="bg-gray-100 border-b border-gray-300 text-xs font-bold text-gray-700">
+                    <th class="py-3 px-1 text-center border-r border-gray-300" rowspan="2" style="width: 10%;">日付</th>
+                    <th class="py-3 px-1 text-center border-r border-gray-300" rowspan="2" style="width: 6%;">体重<br>(kg)</th>
+                    <th class="py-3 px-1 text-center text-blue-700 border-r border-gray-300" colspan="9" style="width: 42%;">朝 (おきてすぐ)</th>
+                    <th class="py-3 px-1 text-center text-indigo-700" colspan="9" style="width: 42%;">夜 (寝るまえ)</th>
+                </tr>
+                <tr class="bg-gray-50 border-b border-gray-300 text-xs text-gray-600">
+                    <th class="py-2 px-1 text-center border-r border-gray-300 bg-blue-50/20" colspan="3">① 1回目</th>
+                    <th class="py-2 px-1 text-center border-r border-gray-300 bg-blue-50/20" colspan="3">② 2回目</th>
+                    <th class="py-2 px-1 text-center border-r border-gray-300 bg-blue-100/60 font-bold text-blue-800" colspan="3">【均】平均</th>
+                    <th class="py-2 px-1 text-center border-r border-gray-300 bg-indigo-50/20" colspan="3">① 1回目</th>
+                    <th class="py-2 px-1 text-center border-r border-gray-300 bg-indigo-50/20" colspan="3">② 2回目</th>
+                    <th class="py-2 px-1 text-center bg-indigo-100/60 font-bold text-indigo-800" colspan="3">【均】平均</th>
+                </tr>
+                <tr class="bg-gray-50 text-xs text-gray-500 text-center border-b border-gray-300">
+                    <th class="border-r border-gray-300"></th>
+                    <th class="border-r border-gray-300"></th>
+                    <th>最高</th>
+                    <th>最低</th>
+                    <th class="border-r border-gray-300">脈</th>
+                    <th>最高</th>
+                    <th>最低</th>
+                    <th class="border-r border-gray-300">脈</th>
+                    <th class="bg-blue-100/20 text-blue-800 font-bold">最高</th>
+                    <th class="bg-blue-100/20 text-blue-800 font-bold">最低</th>
+                    <th class="bg-blue-100/20 text-blue-800 font-bold border-r border-gray-300">脈</th>
+                    <th>最高</th>
+                    <th>最低</th>
+                    <th class="border-r border-gray-300">脈</th>
+                    <th>最高</th>
+                    <th>最低</th>
+                    <th class="border-r border-gray-300">脈</th>
+                    <th class="bg-indigo-100/20 text-indigo-800 font-bold">最高</th>
+                    <th class="bg-indigo-100/20 text-indigo-800 font-bold">最低</th>
+                    <th class="bg-indigo-100/20 text-indigo-800 font-bold">脈</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 font-semibold text-sm">
+                {% for r in records %}
+                <tr class="hover:bg-gray-50 text-center border-b border-gray-200 text-gray-800">
+                    <td class="py-2 px-1 font-bold whitespace-nowrap border-r border-gray-300 bg-indigo-50/10 text-base">
+                        <a href="/?date={{ r.date }}" class="text-indigo-600 hover:text-indigo-900 hover:underline flex items-center justify-center gap-1">
+                            <i class="far fa-calendar-alt text-xs"></i> {{ r.date }}
+                        </a>
+                    </td>
+                    <td class="py-2 px-1 font-bold text-gray-700 bg-gray-50/30 border-r border-gray-300 text-base">
+                        {{ r.weight if r.weight is not none else '-' }}
+                    </td>
+
+                    {% if r.morning %}
+                    <td class="py-2 px-1 text-gray-600">{{ r.morning.sys1 if r.morning.sys1 else '-' }}</td>
+                    <td class="py-2 px-1 text-gray-500">{{ r.morning.dia1 if r.morning.dia1 else '-' }}</td>
+                    <td class="py-2 px-1 text-gray-500 border-r border-gray-300">{{ r.morning.pulse1 if r.morning.pulse1 else '-' }}</td>
+                    <td class="py-2 px-1 text-gray-600">{{ r.morning.sys2 if r.morning.sys2 else '-' }}</td>
+                    <td class="py-2 px-1 text-gray-500">{{ r.morning.dia2 if r.morning.dia2 else '-' }}</td>
+                    <td class="py-2 px-1 text-gray-500 border-r border-gray-300">{{ r.morning.pulse2 if r.morning.pulse2 else '-' }}</td>
+                    <td class="py-2 px-1 font-bold text-blue-800 bg-blue-50 text-base">{{ r.morning.avg_sys if r.morning.avg_sys else '-' }}</td>
+                    <td class="py-2 px-1 font-bold text-gray-900 bg-blue-50 text-base">{{ r.morning.avg_dia if r.morning.avg_dia else '-' }}</td>
+                    <td class="py-2 px-1 text-gray-700 bg-blue-50 border-r border-gray-300">{{ r.morning.avg_pulse if r.morning.avg_pulse else '-' }}</td>
+                    {% else %}
+                    <td class="py-2 px-1 text-gray-300 italic bg-gray-50/10 border-r border-gray-300 text-center" colspan="9">未入力</td>
+                    {% endif %}
+
+                    {% if r.evening %}
+                    <td class="py-2 px-1 text-gray-600">{{ r.evening.sys1 if r.evening.sys1 else '-' }}</td>
+                    <td class="py-2 px-1 text-gray-500">{{ r.evening.dia1 if r.evening.dia1 else '-' }}</td>
+                    <td class="py-2 px-1 text-gray-500 border-r border-gray-300">{{ r.evening.pulse1 if r.evening.pulse1 else '-' }}</td>
+                    <td class="py-2 px-1 text-gray-600">{{ r.evening.sys2 if r.evening.sys2 else '-' }}</td>
+                    <td class="py-2 px-1 text-gray-500">{{ r.evening.dia2 if r.evening.dia2 else '-' }}</td>
+                    <td class="py-2 px-1 text-gray-500 border-r border-gray-300">{{ r.evening.pulse2 if r.evening.pulse2 else '-' }}</td>
+                    <td class="py-2 px-1 font-bold text-indigo-800 bg-indigo-50 text-base">{{ r.evening.avg_sys if r.evening.avg_sys else '-' }}</td>
+                    <td class="py-2 px-1 font-bold text-gray-900 bg-indigo-50 text-base">{{ r.evening.avg_dia if r.evening.avg_dia else '-' }}</td>
+                    <td class="py-2 px-1 text-gray-700 bg-indigo-50">{{ r.evening.avg_pulse if r.evening.avg_pulse else '-' }}</td>
+                    {% else %}
+                    <td class="py-2 px-1 text-gray-300 italic bg-gray-50/10 text-center" colspan="9">未入力</td>
+                    {% endif %}
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="20" class="py-12 text-center text-gray-400 text-lg">まだ手帳に記録がありません。</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="print-area" class="hidden bg-white text-gray-950 p-4">
+    <div class="text-center mb-6">
+        <h1 style="font-size: 24px; font-weight: bold; border-bottom: 3px solid #4f46e5; padding-bottom: 8px; display: inline-block; width: 85%;">
+            血圧・体重管理手帳（測定履歴）
+        </h1>
+        <p style="font-size: 14px; color: #111; margin-top: 10px; font-weight: bold;">
+            利用者： <span style="font-size: 18px; font-weight: bold; border-bottom: 2px solid #111; padding: 0 12px;">{{ session.get('name', 'ゲスト') }}</span> 様
+        </p>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; color: #000; border: 1px solid #666;">
+        <thead>
+            <tr style="background-color: #f3f4f6; text-align: center; font-weight: bold; font-size: 11px;">
+                <th style="border: 1px solid #666; width: 13%; padding: 8px 2px;">日付</th>
+                <th style="border: 1px solid #666; width: 9%; padding: 8px 2px;">体重<br>(kg)</th>
+                <th style="border: 1px solid #666; width: 13%; padding: 8px 2px; background-color: #eff6ff; color: #1e40af;">朝_最高</th>
+                <th style="border: 1px solid #666; width: 13%; padding: 8px 2px; background-color: #eff6ff; color: #1e40af;">朝_最低</th>
+                <th style="border: 1px solid #666; width: 13%; padding: 8px 2px; background-color: #eff6ff; color: #1e40af;">朝_脈拍</th>
+                <th style="border: 1px solid #666; width: 13%; padding: 8px 2px; background-color: #f5f3ff; color: #3730a3;">夜_最高</th>
+                <th style="border: 1px solid #666; width: 13%; padding: 8px 2px; background-color: #f5f3ff; color: #3730a3;">夜_最低</th>
+                <th style="border: 1px solid #666; width: 13%; padding: 8px 2px; background-color: #f5f3ff; color: #3730a3;">夜_脈拍</th>
+            </tr>
+        </thead>
+        <tbody style="font-weight: bold; text-align: center;">
+            {% for r in records %}
+            <tr style="border: 1px solid #666;">
+                <td style="border: 1px solid #666; padding: 6px 2px; background-color: #fafafa; font-size: 12px;">{{ r.date }}</td>
+                <td style="border: 1px solid #666; padding: 6px 2px; background-color: #fafafa; font-size: 12px;">{{ r.weight if r.weight is not none else '-' }}</td>
+                <td style="border: 1px solid #666; padding: 6px 2px; font-size: 13px; color: #1e40af; background-color: #f8fafc;">{{ r.morning.avg_sys if r.morning and r.morning.avg_sys else '-' }}</td>
+                <td style="border: 1px solid #666; padding: 6px 2px; font-size: 13px; color: #1e40af; background-color: #f8fafc;">{{ r.morning.avg_dia if r.morning and r.morning.avg_dia else '-' }}</td>
+                <td style="border: 1px solid #666; padding: 6px 2px; color: #475569; background-color: #f8fafc;">{{ r.morning.avg_pulse if r.morning and r.morning.avg_pulse else '-' }}</td>
+                <td style="border: 1px solid #666; padding: 6px 2px; font-size: 13px; color: #3730a3; background-color: #fdfdfd;">{{ r.evening.avg_sys if r.evening and r.evening.avg_sys else '-' }}</td>
+                <td style="border: 1px solid #666; padding: 6px 2px; font-size: 13px; color: #3730a3; background-color: #fdfdfd;">{{ r.evening.avg_dia if r.evening and r.evening.avg_dia else '-' }}</td>
+                <td style="border: 1px solid #666; padding: 6px 2px; color: #475569; background-color: #fdfdfd;">{{ r.evening.avg_pulse if r.evening and r.evening.avg_pulse else '-' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" style="padding: 20px; text-align: center; color: #999; border: 1px solid #666;">まだ記録がありません。</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // 💡 前の返信で決めた通り、印刷用の新URL（/print_handbook?month=〇〇）へ月を飛ばすように対応
+    function printHandbook(month) {
+        window.open('/print_handbook?month=' + month, '_blank');
+    }
+
+    // CSVダウンロード
+    function downloadCSV() {
+        const headers = ['日付', '体重', '朝_最高', '朝_最低', '朝_脈拍', '夜_最高', '夜_最低', '夜_脈拍'];
+        const rows = [headers];
+
+        const tableRows = document.querySelectorAll('tbody tr');
+        if (tableRows.length === 0 || tableRows[0].innerText.includes('まだ手帳に記録がありません')) {
+            alert('ダウンロードするデータがありません。');
+            return;
+        }
+
+        {% for r in records %}
+        rows.push([
+            "{{ r.date }}",
+            "{{ r.weight if r.weight is not none else '' }}",
+            "{{ r.morning.avg_sys if r.morning and r.morning.avg_sys else '' }}",
+            "{{ r.morning.avg_dia if r.morning and r.morning.avg_dia else '' }}",
+            "{{ r.morning.avg_pulse if r.morning and r.morning.avg_pulse else '' }}",
+            "{{ r.evening.avg_sys if r.evening and r.evening.avg_sys else '' }}",
+            "{{ r.evening.avg_dia if r.evening and r.evening.avg_dia else '' }}",
+            "{{ r.evening.avg_pulse if r.evening and r.evening.avg_pulse else '' }}"
+        ]);
+        {% endfor %}
+
+        const csvContent = "\uFEFF" + rows.map(e => e.map(val => `"${val}"`).join(",")).join("\n");
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+
+        link.setAttribute("href", url);
+        link.setAttribute("download", `blood_pressure_data_${new Date().toISOString().slice(0, 10)}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+
+{% endblock %}

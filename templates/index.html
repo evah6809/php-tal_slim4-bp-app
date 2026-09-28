@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>血圧管理手帳</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+    <style>
+        /* Chrome, Safari, Edge, Opera のスピナー（上下矢印）領域を完全に消す */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* Firefox のスピナーを消す */
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 font-sans min-h-screen flex flex-col text-gray-800">
+
+    <header class="bg-indigo-600 text-white shadow-md print:hidden">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold flex items-center gap-2">
+                <i class="fas fa-heartbeat"></i> <a href="/" class="hover:opacity-90">血圧管理手帳</a>
+            </h1>
+
+            <!-- ログインしている時だけ表示するコンテナ -->
+            <nav tal:condition="is_logged_in" class="flex gap-6 items-center font-bold text-base">
+                <!-- 「入力画面」のリンク（現在のページが '/' の場合に色を変えるクラスを動的につける場合） -->
+                <a href="/" class="hover:underline"
+                    tal:attributes="class string:hover:underline ${is_home_active}">入力画面</a>
+
+                <!-- 「履歴手帳」のリンク -->
+                <a href="/history" class="hover:underline"
+                    tal:attributes="class string:hover:underline ${is_history_active}">履歴手帳</a>
+            </nav>
+        </div>
+    </header>
+
+    <script src="/js/script.js"></script>
+
+    <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-8">
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="md:col-span-2 bg-white rounded-lg shadow-sm border border-gray-100 p-8">
+                <div
+                    class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6 border-b-2 border-gray-100 pb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                            <i class="fas fa-edit text-indigo-500"></i> 血圧・体重を記録する
+                        </h2>
+                        <p class="text-sm text-gray-600 mt-2 flex items-center gap-1">
+                            <i class="far fa-user text-indigo-400"></i> 利用者：
+                            <strong class="text-gray-900 font-bold text-lg" tal:content="name">利用者名</strong> 様
+                        </p>
+                    </div>
+
+                    <span id="mode-badge"
+                        class="text-sm font-bold px-3 py-1.5 rounded-md bg-green-100 text-green-700 self-start sm:self-center hidden">
+                        <i class="fas fa-sync-alt"></i> 過去データの修正モード
+                    </span>
+
+                </div>
+
+                <form action="/" method="POST" onsubmit="return validateForm()" class="space-y-8">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 pb-2">
+                        <div>
+                            <label for="date" class="block text-lg font-bold text-gray-700 mb-2" onchange="fetchRecordByDate(this.value)">日付</label>
+                            <input type="date" id="date" name="date" value="" tal:attributes="value today_str"
+                                class="w-full border border-gray-400 rounded-lg px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-xl bg-gray-50" />
+                        </div>
+                        <div>
+                            <label for="weight" class="block text-lg font-bold text-gray-700 mb-2">今日の体重 (kg) <span
+                                    class="text-xs text-gray-400 font-normal">※無くてもOK</span></label>
+                            <input type="number" step="0.1" id="weight" name="weight"
+                                class="w-full border border-gray-400 rounded-lg px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xl font-bold" />
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-50/60 p-6 rounded-2xl border-2 border-blue-200 space-y-4">
+                        <h3 class="text-xl font-bold text-blue-800 flex items-center gap-2">
+                            <i class="fas fa-sun text-amber-500 text-2xl"></i> 朝の記録
+                        </h3>
+                        <div class="bg-white p-4 rounded-xl border border-blue-100 grid grid-cols-3 gap-4">
+                            <div class="col-span-3 text-sm font-bold text-blue-600">▼ 1回目の測定</div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1 text-center">最高血圧</label>
+                                <input type="number" id="m_systolic1" name="m_systolic1"
+                                    class="w-full border border-gray-400 rounded-lg p-2 text-center font-bold text-gray-800 focus:ring-2 focus:ring-blue-400 text-2xl bg-yellow-50/30" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1 text-center">最低血圧</label>
+                                <input type="number" id="m_diastolic1" name="m_diastolic1"
+                                    class="w-full border border-gray-400 rounded-lg p-2 text-center font-bold text-gray-800 focus:ring-2 focus:ring-blue-400 text-2xl bg-yellow-50/30" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1 text-center">脈拍</label>
+                                <input type="number" id="m_pulse1" name="m_pulse1"
+                                    class="w-full border border-gray-400 rounded-lg p-2 text-center font-bold text-gray-800 focus:ring-2 focus:ring-blue-400 text-2xl bg-yellow-50/30" />
+                            </div>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl border border-blue-100 grid grid-cols-3 gap-4">
+                            <div class="col-span-3 text-sm font-bold text-blue-500">▼ 2回目の測定</div>
+                            <div><input type="number" id="m_systolic2" name="m_systolic2"
+                                    class="w-full border border-gray-400 rounded-lg p-2 text-center font-bold text-gray-800 text-2xl" />
+                            </div>
+                            <div><input type="number" id="m_diastolic2" name="m_diastolic2"
+                                    class="w-full border border-gray-400 rounded-lg p-2 text-center font-bold text-gray-800 text-2xl" />
+                            </div>
+                            <div><input type="number" id="m_pulse2" name="m_pulse2"
+                                    class="w-full border border-gray-400 rounded-lg p-2 text-center font-bold text-gray-800 text-2xl" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-indigo-50/60 p-6 rounded-2xl border-2 border-indigo-200 space-y-4">
+                        <h3 class="text-xl font-bold text-indigo-800 flex items-center gap-2">
+                            <i class="fas fa-moon text-indigo-500 text-2xl"></i> 夜の記録
+                        </h3>
+                        <div class="bg-white p-4 rounded-xl border border-indigo-100 grid grid-cols-3 gap-4">
+                            <div class="col-span-3 text-sm font-bold text-indigo-600">▼ 1回目の測定</div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1 text-center">最高血圧</label>
+                                <input type="number" id="e_systolic1" name="e_systolic1"
+                                    class="w-full border border-gray-400 rounded-lg p-2 text-center font-bold text-gray-800 focus:ring-2 focus:ring-indigo-400 text-2xl bg-yellow-50/30" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1 text-center">最低血圧</label>
+                                <input type="number" id="e_diastolic1" name="e_diastolic1"
+                                    class="w-full border border-gray-400 rounded-lg p-2 text-center font-bold text-gray-800 focus:ring-2 focus:ring-indigo-400 text-2xl bg-yellow-50/30" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1 text-center">脈拍</label>
+                                <input type="number" id="e_pulse1" name="e_pulse1"
+                                    class="w-full border border-gray-400 rounded-lg p-2 text-center font-bold text-gray-800 focus:ring-2 focus:ring-indigo-400 text-2xl bg-yellow-50/30" />
+                            </div>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl border border-indigo-100 grid grid-cols-3 gap-4">
+                            <div class="col-span-3 text-sm font-bold text-indigo-500">▼ 2回目の測定</div>
+                            <div><input type="number" id="e_systolic2" name="e_systolic2"
+                                    class="w-full border border-gray-400 rounded-lg p-2 text-center font-bold text-gray-800 text-2xl" />
+                            </div>
+                            <div><input type="number" id="e_diastolic2" name="e_diastolic2"
+                                    class="w-full border border-gray-400 rounded-lg p-2 text-center font-bold text-gray-800 text-2xl" />
+                            </div>
+                            <div><input type="number" id="e_pulse2" name="e_pulse2"
+                                    class="w-full border border-gray-400 rounded-lg p-2 text-center font-bold text-gray-800 text-2xl" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submit-btn"
+                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-5 px-4 rounded-xl shadow-md text-xl transition transform active:scale-95">
+                        この内容で手帳に保存する
+                    </button>
+                </form>
+            </div>
+
+            <!-- 右サイドエリア -->
+
+                <!-- ☀️ 宮崎市のお天気 -->
+
+                <!-- 🤖 AI相談員（Gemini） 改良版 -->
+
+                <!-- 📝 思いついたらメモ -->
+
+                <!-- メモ入力 ここまで-->
+
+            
+        </div>
+    </main>
+ 
+</body>
+
+</html>

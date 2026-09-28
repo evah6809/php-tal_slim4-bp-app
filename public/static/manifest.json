@@ -1,0 +1,17 @@
+{
+  "short_name": "血圧手帳",
+  "name": "毎日健康！血圧・体重記録手帳",
+  "icons": [
+    {
+      "src": "/static/img/g42.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#E2FCE0",
+  "theme_color": "#4CAF50",
+  "display": "standalone",
+  "orientation": "portrait"
+}
