@@ -26,6 +26,7 @@ docker compose up -d
  クライアントシークレット
  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
  
- $ docker exec -it health-bp-db-1 mysql -u root -pevah6809
- 
+docker exec -it health-bp-db-1 mysql -u root -pevah6809
+
+docker exec -it php-tal_slim4-bp-app-db-1 mysql -u root -pevah6809
 

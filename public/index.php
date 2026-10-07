@@ -81,11 +81,25 @@ $app->get('/', function (Request $request, Response $response) use ($pdo) {
 // ログイン画面
 $app->get('/login', function (Request $request, Response $response) {
     try {
+        // Google Client の初期化とURLの生成を追加
+        $client = new Google_Client();
+        $client->setClientId('494370894984-9v8s8bkl376njn1tc2o9jsno650jhskb.apps.googleusercontent.com');
+        $client->setClientSecret('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');
+        $client->setRedirectUri('http://localhost:8080/auth/callback.php');
+        $client->addScope('email');
+        $client->addScope('profile');
+
+        $googleLoginUrl = $client->createAuthUrl();
+
         $template = new PHPTAL(__DIR__ . '/../templates/login.html');
+        // PHPTALへ確実に変数を渡す
+        $template->set('google_login_url', $googleLoginUrl);
+        
         $html = $template->execute();
         $response->getBody()->write($html);
     } catch (Exception $e) {
         $response->getBody()->write("Login Template Error: " . $e->getMessage());
+        return $response->withStatus(500);
     }
     return $response;
 });
