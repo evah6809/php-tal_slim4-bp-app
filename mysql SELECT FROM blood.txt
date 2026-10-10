@@ -1,0 +1,31 @@
+mysql> SELECT * FROM blood_pressure_records where record_date = '2026-08-01'\G
+
+docker exec -it health-bp-db-1 mysql -u root -pevah6809 -e "SELECT * FROM blood_pressure_records WHERE record_date = '2026-09-27';"
+
+docker exec -it health-bp-web-1 bash
+
+docker exec -it health-bp-db-1 mysql -u root -p'evah6809' -e "USE \`health-bp\`; DESCRIBE blood_pressure_records;"
+
+docker exec -it health-bp-db-1 php migrations/migrate.php
+
+shinichiro-kondo@pleiades:~/health-bp$ docker ps
+CONTAINER ID   IMAGE           COMMAND                   CREATED             STATUS             PORTS                                                    NAMES
+75c083e61339   health-bp-web   "docker-php-entrypoi…"   About an hour ago   Up About an hour   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp                  health-bp-web-1
+52cac6e473d5   mysql:8.0       "docker-entrypoint.s…"   About an hour ago   Up About an hour   0.0.0.0:3306->3306/tcp, [::]:3306->3306/tcp, 33060/tcp   health-bp-db-1
+
+docker compose up -d
+[+] up 2/2
+ ✔ Container health-bp-web-1 Running                                                                                                                             0.0s
+ ✔ Container health-bp-db-1  Running     
+ 
+ http://127.0.0.1:8080/
+ 
+ クライアントID
+ 494370894984-9v8s8bkl376njn1tc2o9jsno650jhskb.apps.googleusercontent.com
+ 
+ クライアントシークレット
+ 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
+ 
+ $ docker exec -it health-bp-db-1 mysql -u root -pevah6809
+ 
+
