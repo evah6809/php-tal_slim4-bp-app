@@ -14,7 +14,10 @@ class PdoBloodPressureRepository implements BloodPressureRepositoryInterface
         // 👇 これを仕込むと、docker logs に強制出力されます
         error_log("【DEBUG】受け取った日付: " . $date . ", ユーザーID: " . $userId);
         $stmt = $this->pdo->prepare("SELECT * FROM blood_pressure_records WHERE record_date = :date AND user_id = :user_id");
-        $stmt->execute([':date' => $date]);
+        $stmt->execute([
+            ':date' => $date,
+            ':user_id' => $userId
+        ]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         // 👇 取得できた行データをログに出してみる
