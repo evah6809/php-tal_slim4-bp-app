@@ -15,13 +15,10 @@ class PdoBloodPressureRepository implements BloodPressureRepositoryInterface
         error_log("【DEBUG】受け取った日付: " . $date . ", ユーザーID: " . $userId);
         $stmt = $this->pdo->prepare("SELECT * FROM blood_pressure_records WHERE record_date = :date AND user_id = :user_id");
         $stmt->execute([
-<<<<<<< HEAD
             ':date' => $date,
             ':user_id' => $userId
-=======
             ':date'    => $date,
             ':user_id' => $userId,
->>>>>>> 1b6cd8eb5ab3579669dc0330a2f5ce0e2384f226
         ]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
