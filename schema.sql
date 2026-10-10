@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS blood_pressure_records (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id VARCHAR(100) NOT NULL,
+    record_date VARCHAR(10) NOT NULL,
+    weight DOUBLE,
+    morning_systolic1 INT,
+    morning_diastolic1 INT,
+    morning_pulse1 INT,
+    morning_systolic2 INT,
+    morning_diastolic2 INT,
+    morning_pulse2 INT,
+    evening_systolic1 INT,
+    evening_diastolic1 INT,
+    evening_pulse1 INT,
+    evening_systolic2 INT,
+    evening_diastolic2 INT,
+    evening_pulse2 INT,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    UNIQUE KEY uk_user_date (user_id, record_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
